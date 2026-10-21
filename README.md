@@ -1,5 +1,7 @@
 # Kanban Task Manager
 
+[![CI](https://github.com/nurlanmusayev2000/kanban-task-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/nurlanmusayev2000/kanban-task-manager/actions/workflows/ci.yml)
+
 A full-stack Kanban board built with MongoDB, Express, React and Node.js (MERN), in TypeScript. Users sign up, create boards, and drag cards between lists. Card order is saved on the server.
 
 ![Dragging cards between lists](docs/screenshots/drag-and-drop.gif)
@@ -168,9 +170,34 @@ Then start the frontend as above. `npm run seed` replaces only the demo user's d
 | `backend` | `npm run dev` | API using `MONGODB_URI`, restarting on changes |
 | `backend` | `npm run seed` | Create or reset the demo user and board in `MONGODB_URI` |
 | `backend` | `npm run build` / `npm start` | Compile to `dist/` / run the compiled API |
+| `backend` | `npm test` | Run the API tests |
+| `backend` | `npm run lint` | Run oxlint |
 | `frontend` | `npm run dev` | Vite dev server |
-| `frontend` | `npm run build` | Type-check and build for production |
+| `frontend` | `npm run build` | Type-check, including tests, and build for production |
+| `frontend` | `npm test` | Run the component tests |
 | `frontend` | `npm run lint` | Run oxlint |
+
+## Testing
+
+Running the tests needs Node.js 22.12 or later.
+
+```bash
+cd backend && npm test    # API tests, no MongoDB install needed
+cd frontend && npm test   # component tests
+```
+
+**Backend:** Vitest and supertest, with mongodb-memory-server. Each test file gets its own in-memory MongoDB, and supertest calls the Express app directly, so no port is opened.
+
+- **Auth:** signup, including duplicate emails and validation, and login. A wrong password and an unknown email return the same 401. Protected routes reject a missing, malformed, expired or forged token.
+- **Board access:** another user gets 403 when reading or changing a board, its lists or its cards, and doesn't see the board in their list. Members get access once added, and only the owner can delete a board.
+- **Card ordering:** a regression test for the position bug fixed in `81a194a`. After moves within a list, moves between lists and deletes, every list's positions must be exactly 0..n-1 in the expected order. A seeded run of 60 random moves checks the API against a simple model after every step.
+
+**Frontend:** Vitest and React Testing Library in jsdom, with API responses mocked by MSW. Any request a test doesn't mock fails the test.
+
+- **Login form:** required-field errors with no request sent, the server's message for wrong credentials, and a successful login that stores the session and navigates to the dashboard.
+- **Board page:** lists and cards are rendered in position order even when the API returns them out of order. The request carries the stored Bearer token, and labels, descriptions and due dates show.
+
+[GitHub Actions](.github/workflows/ci.yml) runs lint, build and tests for both packages on every push and pull request.
 
 ## License
 
