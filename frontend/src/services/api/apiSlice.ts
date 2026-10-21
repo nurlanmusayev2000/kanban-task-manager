@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { Board, BoardWithLists, Card, List, User } from '../../types';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_URL,
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
   prepareHeaders: (headers) => {
     const token = localStorage.getItem('authToken');
     if (token) {
