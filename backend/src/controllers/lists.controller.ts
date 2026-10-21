@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../middleware/errorHandler.middleware';
 import { AuthRequest } from '../types';
 import { requireBoardAccess } from './boards.controller';
+import { renumberLists } from '../utils/positions';
 
 export const createList = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { boardId, title } = req.body;
@@ -38,6 +39,7 @@ export const deleteList = asyncHandler(async (req: AuthRequest, res: Response) =
 
   await Card.deleteMany({ list: list.id });
   await list.deleteOne();
+  await renumberLists(list.board);
 
   res.json({ message: 'List deleted' });
 });

@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../middleware/errorHandler.middleware';
 import { AuthRequest } from '../types';
 import { requireBoardAccess } from './boards.controller';
+import { placeCard, renumberCards } from '../utils/positions';
 
 export const createCard = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { listId, title, description, labels, dueDate } = req.body;
@@ -34,8 +35,12 @@ export const updateCard = asyncHandler(async (req: AuthRequest, res: Response) =
   await requireBoardAccess(card.board.toString(), req.user!.userId);
 
   const { title, description, listId, position, labels, dueDate, assignees } = req.body;
+  if (position !== undefined && (!Number.isInteger(position) || position < 0)) {
+    throw new ApiError(400, 'position must be a non-negative integer');
+  }
 
-  if (listId !== undefined && listId !== card.list.toString()) {
+  const fromListId = card.list.toString();
+  if (listId !== undefined && listId !== fromListId) {
     const targetList = await List.findById(listId);
     if (!targetList) throw new ApiError(404, 'Target list not found');
     if (targetList.board.toString() !== card.board.toString()) {
@@ -46,12 +51,16 @@ export const updateCard = asyncHandler(async (req: AuthRequest, res: Response) =
 
   if (title !== undefined) card.title = title;
   if (description !== undefined) card.description = description;
-  if (position !== undefined) card.position = position;
   if (labels !== undefined) card.labels = labels;
   if (dueDate !== undefined) card.dueDate = dueDate;
   if (assignees !== undefined) card.assignees = assignees;
 
   await card.save();
+
+  // Moving a card shifts its neighbours, so renumber the affected lists.
+  if (position !== undefined || card.list.toString() !== fromListId) {
+    card.position = await placeCard(card._id, card.list, position, fromListId);
+  }
   res.json({ card });
 });
 
@@ -61,6 +70,7 @@ export const deleteCard = asyncHandler(async (req: AuthRequest, res: Response) =
   await requireBoardAccess(card.board.toString(), req.user!.userId);
 
   await card.deleteOne();
+  await renumberCards(card.list);
   res.json({ message: 'Card deleted' });
 });
 
