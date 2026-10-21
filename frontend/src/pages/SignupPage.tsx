@@ -24,9 +24,13 @@ export default function SignupPage() {
   const navigate = useNavigate();
 
   const onSubmit = async (data: SignupForm) => {
-    const result = await signup(data).unwrap();
-    dispatch(setCredentials(result));
-    navigate('/');
+    try {
+      const result = await signup(data).unwrap();
+      dispatch(setCredentials(result));
+      navigate('/');
+    } catch {
+      // The mutation's `error` state renders the message below the form.
+    }
   };
 
   return (

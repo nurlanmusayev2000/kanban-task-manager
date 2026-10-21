@@ -23,9 +23,13 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const onSubmit = async (data: LoginForm) => {
-    const result = await login(data).unwrap();
-    dispatch(setCredentials(result));
-    navigate('/');
+    try {
+      const result = await login(data).unwrap();
+      dispatch(setCredentials(result));
+      navigate('/');
+    } catch {
+      // The mutation's `error` state renders the message below the form.
+    }
   };
 
   return (
