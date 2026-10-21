@@ -11,7 +11,7 @@ function required(name: string, fallback?: string): string {
 }
 
 export const env = {
-  port: parseInt(process.env.PORT || '5000', 10),
+  port: parseInt(process.env.PORT || '5001', 10),
   mongodbUri: required('MONGODB_URI'),
   jwtSecret: required('JWT_SECRET'),
   jwtExpire: process.env.JWT_EXPIRE || '7d',
