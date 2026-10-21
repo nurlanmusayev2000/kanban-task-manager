@@ -109,7 +109,7 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({ card, boardId,
           </div>
         </div>
 
-        <div className="border-t pt-4">
+        <div className="border-t border-gray-200 pt-4">
           <h3 className="mb-2 text-sm font-semibold">Comments</h3>
           <div className="mb-2 flex max-h-40 flex-col gap-2 overflow-y-auto">
             {card.comments.map((c, i) => (
