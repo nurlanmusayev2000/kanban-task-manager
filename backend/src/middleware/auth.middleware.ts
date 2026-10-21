@@ -12,7 +12,7 @@ export function auth(req: AuthRequest, res: Response, next: NextFunction) {
 
     req.user = verifyToken(token);
     next();
-  } catch (error) {
+  } catch {
     res.status(401).json({ message: 'Invalid or expired token' });
   }
 }

@@ -7,6 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "dev:memory": "tsx watch src/dev/memoryServer.ts",
     "build": "tsc",
+    "lint": "oxlint",
     "start": "node dist/server.js",
     "seed": "tsx src/scripts/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -32,6 +33,7 @@
     "@types/node": "^22.20.3",
     "@types/validator": "^13.15.10",
     "mongodb-memory-server": "^11.3.0",
+    "oxlint": "^1.89.0",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   }
