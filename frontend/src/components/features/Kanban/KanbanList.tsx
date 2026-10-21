@@ -31,7 +31,7 @@ export const KanbanList: React.FC<KanbanListProps> = ({ list, boardId, onCardCli
   };
 
   return (
-    <div className="flex w-72 flex-shrink-0 flex-col rounded-lg bg-gray-100 p-3">
+    <section aria-label={list.title} className="flex w-72 flex-shrink-0 flex-col rounded-lg bg-gray-100 p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         {isEditingTitle ? (
           <input
@@ -68,6 +68,6 @@ export const KanbanList: React.FC<KanbanListProps> = ({ list, boardId, onCardCli
       </div>
 
       <AddCardForm listId={list._id} boardId={boardId} />
-    </div>
+    </section>
   );
 };
