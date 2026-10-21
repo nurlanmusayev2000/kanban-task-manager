@@ -18,9 +18,6 @@ jobs:
     defaults:
       run:
         working-directory: backend
-    env:
-      # Where mongodb-memory-server keeps its MongoDB binary, cached below.
-      MONGOMS_DOWNLOAD_DIR: ${{ runner.temp }}/mongodb-binaries
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -34,10 +31,16 @@ jobs:
           path: ${{ runner.temp }}/mongodb-binaries
           key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('backend/package-lock.json') }}
           restore-keys: mongodb-binaries-${{ runner.os }}-
+      # MONGOMS_DOWNLOAD_DIR is where mongodb-memory-server keeps its MongoDB binary
+      # (cached above). The runner context is only available at step level.
       - run: npm ci
+        env:
+          MONGOMS_DOWNLOAD_DIR: ${{ runner.temp }}/mongodb-binaries
       - run: npm run lint
       - run: npm run build
       - run: npm test
+        env:
+          MONGOMS_DOWNLOAD_DIR: ${{ runner.temp }}/mongodb-binaries
 
   frontend:
     name: Frontend (lint, build, test)
