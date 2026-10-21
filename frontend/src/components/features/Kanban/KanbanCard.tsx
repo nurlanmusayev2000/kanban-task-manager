@@ -2,6 +2,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Card } from '../../../types';
+import { KanbanCardContent } from './KanbanCardContent';
 
 interface KanbanCardProps {
   card: Card;
@@ -29,22 +30,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ card, onClick }) => {
       onClick={onClick}
       className="cursor-grab rounded-lg bg-white p-3 shadow-sm hover:shadow-md active:cursor-grabbing"
     >
-      <h3 className="text-sm font-medium">{card.title}</h3>
-      {card.description && <p className="mt-1 line-clamp-2 text-xs text-gray-500">{card.description}</p>}
-      {(card.labels.length > 0 || card.dueDate) && (
-        <div className="mt-2 flex flex-wrap items-center gap-1">
-          {card.labels.map((label) => (
-            <span key={label} className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800">
-              {label}
-            </span>
-          ))}
-          {card.dueDate && (
-            <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
-              {new Date(card.dueDate).toLocaleDateString()}
-            </span>
-          )}
-        </div>
-      )}
+      <KanbanCardContent card={card} />
     </div>
   );
 };

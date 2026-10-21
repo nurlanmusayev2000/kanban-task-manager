@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import {
   DndContext,
+  DragOverlay,
   type DragEndEvent,
+  type DragStartEvent,
   PointerSensor,
   closestCorners,
   useSensor,
@@ -12,15 +14,20 @@ import { Loading } from '../../common/Loading';
 import { KanbanList } from './KanbanList';
 import { AddListForm } from './AddListForm';
 import { CardDetailModal } from './CardDetailModal';
+import { KanbanCardContent } from './KanbanCardContent';
 import type { List } from '../../../types';
 
 export const KanbanBoard: React.FC<{ boardId: string }> = ({ boardId }) => {
   const { data, isLoading } = useGetBoardQuery(boardId);
   const [updateCard] = useUpdateCardMutation();
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
+  const handleDragStart = (event: DragStartEvent) => setDraggedCardId(event.active.id as string);
+
   const handleDragEnd = async (event: DragEndEvent) => {
+    setDraggedCardId(null);
     const { active, over } = event;
     if (!over || !data) return;
 
@@ -62,9 +69,9 @@ export const KanbanBoard: React.FC<{ boardId: string }> = ({ boardId }) => {
   if (isLoading || !data) return <Loading label="Loading board..." />;
 
   const sortedLists = [...data.lists].sort((a, b) => a.position - b.position);
-  const activeCard = activeCardId
-    ? sortedLists.flatMap((l) => l.cards).find((c) => c._id === activeCardId) || null
-    : null;
+  const allCards = sortedLists.flatMap((l) => l.cards);
+  const activeCard = activeCardId ? allCards.find((c) => c._id === activeCardId) || null : null;
+  const draggedCard = draggedCardId ? allCards.find((c) => c._id === draggedCardId) : undefined;
 
   return (
     <div className="p-6">
@@ -73,13 +80,27 @@ export const KanbanBoard: React.FC<{ boardId: string }> = ({ boardId }) => {
         {data.board.description && <span className="text-sm text-gray-500">{data.board.description}</span>}
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setDraggedCardId(null)}
+      >
         <div className="flex items-start gap-4 overflow-x-auto pb-4">
           {sortedLists.map((list) => (
             <KanbanList key={list._id} list={list} boardId={boardId} onCardClick={setActiveCardId} />
           ))}
           <AddListForm boardId={boardId} />
         </div>
+        {/* A floating copy follows the pointer across lists; the original stays in place, faded. */}
+        <DragOverlay>
+          {draggedCard && (
+            <div className="w-[264px] cursor-grabbing rounded-lg bg-white p-3 shadow-lg ring-1 ring-black/5">
+              <KanbanCardContent card={draggedCard} />
+            </div>
+          )}
+        </DragOverlay>
       </DndContext>
 
       <CardDetailModal card={activeCard} boardId={boardId} onClose={() => setActiveCardId(null)} />
