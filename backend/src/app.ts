@@ -7,7 +7,7 @@ import boardRoutes from './routes/boards.routes';
 import listRoutes from './routes/lists.routes';
 import cardRoutes from './routes/cards.routes';
 
-const app = express();
+export const app = express();
 
 app.use(cors({ origin: env.clientUrl, credentials: true }));
 app.use(express.json());
@@ -22,5 +22,3 @@ app.use('/api/cards', cardRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
-
-export default app;
