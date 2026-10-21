@@ -1,6 +1,27 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { Board, BoardWithLists, Card, List, User } from '../../types';
 
+/**
+ * Moves a card to `position` in `listId` (or within its own list) and
+ * renumbers both lists 0..n-1, the same rule the API applies on the server.
+ */
+function moveCardInLists(lists: List[], cardId: string, listId?: string, position?: number) {
+  const byPosition = (cards: Card[]) => [...cards].sort((a, b) => a.position - b.position);
+  const source = lists.find((l) => l.cards.some((c) => c._id === cardId));
+  const target = listId ? lists.find((l) => l._id === listId) : source;
+  if (!source || !target) return;
+
+  const card = source.cards.find((c) => c._id === cardId)!;
+  source.cards = byPosition(source.cards).filter((c) => c._id !== cardId);
+  const targetCards = target === source ? source.cards : byPosition(target.cards);
+  const index = Math.max(0, Math.min(position ?? targetCards.length, targetCards.length));
+  card.list = target._id;
+  targetCards.splice(index, 0, card);
+  target.cards = targetCards;
+
+  for (const list of [source, target]) list.cards.forEach((c, i) => (c.position = i));
+}
+
 const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
   prepareHeaders: (headers) => {
@@ -73,6 +94,21 @@ export const api = createApi({
       { cardId: string; boardId: string; title?: string; description?: string; listId?: string; position?: number; labels?: string[]; dueDate?: string | null }
     >({
       query: ({ cardId, boardId: _boardId, ...body }) => ({ url: `/cards/${cardId}`, method: 'PUT', body }),
+      // Move the card in the cached board immediately so a dropped card doesn't jump back
+      // until the refetch arrives; roll back if the request fails.
+      async onQueryStarted({ cardId, boardId, listId, position }, { dispatch, queryFulfilled }) {
+        if (listId === undefined && position === undefined) return;
+        const patch = dispatch(
+          api.util.updateQueryData('getBoard', boardId, (draft) => {
+            moveCardInLists(draft.lists, cardId, listId, position);
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patch.undo();
+        }
+      },
       invalidatesTags: (_r, _e, arg) => [{ type: 'BoardDetail', id: arg.boardId }],
     }),
     deleteCard: builder.mutation<{ message: string }, { cardId: string; boardId: string }>({

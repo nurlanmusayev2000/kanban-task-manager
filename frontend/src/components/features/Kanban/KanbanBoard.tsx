@@ -47,12 +47,16 @@ export const KanbanBoard: React.FC<{ boardId: string }> = ({ boardId }) => {
 
     if (targetListId === sourceList._id && active.id === over.id) return;
 
-    await updateCard({
-      cardId: active.id as string,
-      boardId,
-      listId: targetListId,
-      position: targetIndex,
-    }).unwrap();
+    try {
+      await updateCard({
+        cardId: active.id as string,
+        boardId,
+        listId: targetListId,
+        position: targetIndex,
+      }).unwrap();
+    } catch {
+      // The optimistic move is rolled back in the mutation; the card returns to where it was.
+    }
   };
 
   if (isLoading || !data) return <Loading label="Loading board..." />;
